@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Attendance Scheduling System</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header -->
+      <header class="header">
+        <h1>📅 Attendance Scheduling System</h1>
+        <p>Manage staff attendance and schedules efficiently</p>
+      </header>
+
+      <!-- Navigation Tabs -->
+      <nav class="nav-tabs">
+        <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
+        <button class="tab-btn" data-tab="add-staff">Add Staff</button>
+        <button class="tab-btn" data-tab="entry-time">Entry Time</button>
+        <button class="tab-btn" data-tab="schedule">Schedule</button>
+        <button class="tab-btn" data-tab="attendance">Attendance</button>
+        <button class="tab-btn" data-tab="reports">Reports</button>
+      </nav>
+
+      <!-- Dashboard Tab -->
+      <section id="dashboard" class="tab-content active">
+        <h2>Dashboard</h2>
+        <div class="dashboard-grid">
+          <div class="stat-card">
+            <h3>Total Staff</h3>
+            <p class="stat-number" id="total-staff">0</p>
+          </div>
+          <div class="stat-card">
+            <h3>Present Today</h3>
+            <p class="stat-number present" id="present-today">0</p>
+          </div>
+          <div class="stat-card">
+            <h3>Absent Today</h3>
+            <p class="stat-number absent" id="absent-today">0</p>
+          </div>
+          <div class="stat-card">
+            <h3>On Leave</h3>
+            <p class="stat-number leave" id="on-leave">0</p>
+          </div>
+        </div>
+        <div class="dashboard-section">
+          <h3>Today's Attendance</h3>
+          <table class="attendance-table">
+            <thead>
+              <tr>
+                <th>Staff Name</th>
+                <th>Status</th>
+                <th>Office-in Time</th>
+                <th>Office-out Time</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="today-attendance">
+              <tr>
+                <td colspan="5">No staff records found</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Add Staff Tab -->
+      <section id="add-staff" class="tab-content">
+        <h2>Add Staff Member</h2>
+        <form class="form-container" id="add-staff-form">
+          <div class="form-group">
+            <label for="staff-name">Name:</label>
+            <input
+              type="text"
+              id="staff-name"
+              placeholder="Enter staff name"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="staff-id">Staff ID:</label>
+            <input
+              type="text"
+              id="staff-id"
+              placeholder="Enter staff ID"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="staff-email">Email:</label>
+            <input
+              type="email"
+              id="staff-email"
+              placeholder="Enter email address"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="staff-department">Department:</label>
+            <select id="staff-department" required>
+              <option value="">Select Department</option>
+              <option value="HR">Human Resources</option>
+              <option value="IT">Information Technology</option>
+              <option value="Sales">Sales</option>
+              <option value="Marketing">Marketing</option>
+              <option value="Finance">Finance</option>
+              <option value="Operations">Operations</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="staff-position">Position:</label>
+            <input
+              type="text"
+              id="staff-position"
+              placeholder="Enter position"
+              required
+            />
+          </div>
+          <button type="submit" class="btn btn-primary">Add Staff</button>
+        </form>
+
+        <h3>Staff List</h3>
+        <table class="attendance-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Staff ID</th>
+              <th>Email</th>
+              <th>Department</th>
+              <th>Position</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="staff-list">
+            <tr>
+              <td colspan="6">No staff members added yet</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- Edit Staff Modal -->
+      <div id="edit-staff-modal" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2>Edit Staff Member</h2>
+            <span class="close-btn" onclick="closeEditModal()">&times;</span>
+          </div>
+          <form id="edit-staff-form" class="form-container">
+            <input type="hidden" id="edit-staff-id" />
+            <div class="form-group">
+              <label for="edit-staff-name">Name:</label>
+              <input
+                type="text"
+                id="edit-staff-name"
+                placeholder="Enter staff name"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="edit-staff-id-field">Staff ID:</label>
+              <input
+                type="text"
+                id="edit-staff-id-field"
+                placeholder="Enter staff ID"
+                readonly
+              />
+            </div>
+            <div class="form-group">
+              <label for="edit-staff-email">Email:</label>
+              <input
+                type="email"
+                id="edit-staff-email"
+                placeholder="Enter email address"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="edit-staff-department">Department:</label>
+              <select id="edit-staff-department" required>
+                <option value="">Select Department</option>
+                <option value="HR">Human Resources</option>
+                <option value="IT">Information Technology</option>
+                <option value="Sales">Sales</option>
+                <option value="Marketing">Marketing</option>
+                <option value="Finance">Finance</option>
+                <option value="Operations">Operations</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="edit-staff-position">Position:</label>
+              <input
+                type="text"
+                id="edit-staff-position"
+                placeholder="Enter position"
+                required
+              />
+            </div>
+            <div class="button-group">
+              <button type="submit" class="btn btn-primary">Save Changes</button>
+              <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Edit Attendance Modal -->
+      <div id="edit-attendance-modal" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2>Edit Attendance Record</h2>
+            <span class="close-btn" onclick="closeEditAttendanceModal()">&times;</span>
+          </div>
+          <form id="edit-attendance-form" class="form-container">
+            <input type="hidden" id="edit-attendance-id" />
+            <div class="form-group">
+              <label for="edit-attendance-date">Date:</label>
+              <input type="date" id="edit-attendance-date" readonly />
+            </div>
+            <div class="form-group">
+              <label for="edit-attendance-staff">Staff Name:</label>
+              <input type="text" id="edit-attendance-staff" readonly />
+            </div>
+            <div class="form-group">
+              <label for="edit-attendance-status">Status:</label>
+              <select id="edit-attendance-status" required>
+                <option value="Present">Present</option>
+                <option value="Absent">Absent</option>
+                <option value="Leave">On Leave</option>
+                <option value="Late">Late</option>
+                <option value="HalfDay">Half Day</option>
+                <option value="WFH">Work From Home</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="edit-attendance-checkin">Check-in Time:</label>
+              <input type="time" id="edit-attendance-checkin" />
+            </div>
+            <div class="form-group">
+              <label for="edit-attendance-checkout">Check-out Time:</label>
+              <input type="time" id="edit-attendance-checkout" />
+            </div>
+            <div class="button-group">
+              <button type="submit" class="btn btn-primary">Save Changes</button>
+              <button type="button" class="btn btn-secondary" onclick="closeEditAttendanceModal()">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Entry Time Tab -->
+      <section id="entry-time" class="tab-content">
+        <h2>⏰ Entry Time Tracking</h2>
+        <div class="entry-time-container">
+          <div class="form-container">
+            <h3>Record Entry/Exit Time</h3>
+            <form id="entry-time-form">
+              <div class="form-group">
+                <label for="entry-date">Date:</label>
+                <input type="date" id="entry-date" required />
+              </div>
+              <div class="form-group">
+                <label for="entry-staff">Select Staff:</label>
+                <select id="entry-staff" required>
+                  <option value="">Choose staff member</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="entry-type">Entry Type:</label>
+                <select id="entry-type" required>
+                  <option value="">Select Type</option>
+                  <option value="Entry">Entry (In)</option>
+                  <option value="Exit">Exit (Out)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="entry-time">Time:</label>
+                <input type="time" id="entry-time" required />
+              </div>
+              <button type="submit" class="btn btn-primary">Record Time</button>
+            </form>
+          </div>
+
+          <div>
+            <h3>Entry/Exit Records</h3>
+            <div class="filter-group">
+              <input type="date" id="filter-entry-date" placeholder="Filter by date" />
+              <button class="btn btn-secondary" onclick="filterEntryTime()">Filter</button>
+            </div>
+            <table class="attendance-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Staff Name</th>
+                  <th>Entry Time</th>
+                  <th>Exit Time</th>
+                  <th>Total Hours</th>
+                  <th>Duration</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="entry-time-list">
+                <tr>
+                  <td colspan="7">No entry records found</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="dashboard-section">
+          <h3>Today's Entry/Exit Summary</h3>
+          <table class="attendance-table">
+            <thead>
+              <tr>
+                <th>Staff Name</th>
+                <th>Entry Time</th>
+                <th>Exit Time</th>
+                <th>Total Hours</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="entry-summary">
+              <tr>
+                <td colspan="5">No data available</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Edit Entry Time Modal -->
+      <div id="edit-entry-modal" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2>Edit Entry/Exit Time</h2>
+            <span class="close-btn" onclick="closeEditEntryModal()">&times;</span>
+          </div>
+          <form id="edit-entry-form" class="form-container">
+            <input type="hidden" id="edit-entry-id" />
+            <div class="form-group">
+              <label for="edit-entry-date-field">Date:</label>
+              <input
+                type="date"
+                id="edit-entry-date-field"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="edit-entry-staff-name">Staff Name:</label>
+              <input
+                type="text"
+                id="edit-entry-staff-name"
+                readonly
+              />
+            </div>
+            <div class="form-group">
+              <label for="edit-entry-type-field">Entry Type:</label>
+              <select id="edit-entry-type-field" required>
+                <option value="">Select Type</option>
+                <option value="Entry">Entry (In)</option>
+                <option value="Exit">Exit (Out)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="edit-entry-time-field">Time:</label>
+              <input
+                type="time"
+                id="edit-entry-time-field"
+                required
+              />
+            </div>
+            <div class="button-group">
+              <button type="submit" class="btn btn-primary">Save Changes</button>
+              <button type="button" class="btn btn-secondary" onclick="closeEditEntryModal()">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Schedule Tab -->
+      <section id="schedule" class="tab-content">
+        <h2>Schedule Management</h2>
+        <div class="schedule-container">
+          <div class="form-container">
+            <h3>Create Schedule</h3>
+            <form id="schedule-form">
+              <div class="form-group">
+                <label for="schedule-date">Date:</label>
+                <input type="date" id="schedule-date" required />
+              </div>
+              <div class="form-group">
+                <label for="schedule-staff">Select Staff:</label>
+                <select id="schedule-staff" required>
+                  <option value="">Choose staff member</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="schedule-shift">Shift:</label>
+                <select id="schedule-shift" required>
+                  <option value="">Select Shift</option>
+                  <option value="Morning">Morning (9 AM - 1 PM)</option>
+                  <option value="Afternoon">Afternoon (1 PM - 5 PM)</option>
+                  <option value="Evening">Evening (5 PM - 9 PM)</option>
+                  <option value="Full Day">Full Day (9 AM - 5 PM)</option>
+                </select>
+              </div>
+              <button type="submit" class="btn btn-primary">Schedule</button>
+            </form>
+          </div>
+
+          <div>
+            <h3>Scheduled Shifts</h3>
+            <table class="attendance-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Staff Name</th>
+                  <th>Shift</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="schedule-list">
+                <tr>
+                  <td colspan="4">No schedules created yet</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Attendance Tab -->
+      <section id="attendance" class="tab-content">
+        <h2>Attendance Check-In/Check-Out</h2>
+        <div class="attendance-container">
+          <form id="attendance-form" class="form-container">
+            <div class="form-group">
+              <label for="attendance-date">Date:</label>
+              <input type="date" id="attendance-date" required />
+            </div>
+            <div class="form-group">
+              <label for="attendance-staff">Select Staff:</label>
+              <select id="attendance-staff" required>
+                <option value="">Choose staff member</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="attendance-status">Status:</label>
+              <select id="attendance-status" required>
+                <option value="">Select Status</option>
+                <option value="Present">Present</option>
+                <option value="Absent">Absent</option>
+                <option value="Leave">On Leave</option>
+                <option value="Late">Late</option>
+                <option value="HalfDay">Half Day</option>
+                <option value="WFH">Work From Home</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="attendance-time">Check-in Time:</label>
+              <input type="time" id="attendance-time" />
+            </div>
+            <div class="form-group">
+              <label for="attendance-checkout">Check-out Time:</label>
+              <input type="time" id="attendance-checkout" />
+            </div>
+            <button type="submit" class="btn btn-primary">
+              Mark Attendance
+            </button>
+          </form>
+
+          <h3>Attendance Records</h3>
+          <div class="filter-group">
+            <input type="date" id="filter-date" placeholder="Filter by date" />
+            <button class="btn btn-secondary" onclick="filterAttendance()">
+              Filter
+            </button>
+          </div>
+          <div class="table-wrapper">
+            <table class="attendance-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Staff Name</th>
+                  <th>Status</th>
+                  <th>Check-in Time</th>
+                  <th>Check-out Time</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="attendance-list">
+                <tr>
+                  <td colspan="6">No attendance records found</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Reports Tab -->
+      <section id="reports" class="tab-content">
+        <h2>Reports & Analytics</h2>
+        <div class="reports-container">
+          <div class="filter-group">
+            <label>Select Staff Member:</label>
+            <select id="report-staff" onchange="generateReport()">
+              <option value="">All Staff</option>
+            </select>
+          </div>
+
+          <div class="report-section">
+            <h3>Attendance Summary</h3>
+            <div class="summary-grid">
+              <div class="summary-card">
+                <h4>Total Days</h4>
+                <p id="report-total-days">0</p>
+              </div>
+              <div class="summary-card">
+                <h4>Present</h4>
+                <p id="report-present">0</p>
+              </div>
+              <div class="summary-card">
+                <h4>Absent</h4>
+                <p id="report-absent">0</p>
+              </div>
+              <div class="summary-card">
+                <h4>On Leave</h4>
+                <p id="report-leave">0</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="report-section">
+            <h3>Detailed Report</h3>
+            <div class="table-wrapper">
+              <table class="attendance-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Staff Name</th>
+                    <th>Status</th>
+                    <th>Check-in Time</th>
+                    <th>Check-out Time</th>
+                  </tr>
+                </thead>
+                <tbody id="report-details">
+                  <tr>
+                    <td colspan="5">No data to display</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="report-section">
+            <h3>Time Analytics Report</h3>
+            <div class="table-wrapper">
+              <table class="attendance-table">
+                <thead>
+                  <tr>
+                    <th>Staff Name</th>
+                    <th>Status</th>
+                    <th>Office-in Time (AM/PM)</th>
+                    <th>Office-out Time (AM/PM)</th>
+                    <th>Hours Worked</th>
+                  </tr>
+                </thead>
+                <tbody id="time-analytics-report">
+                  <tr>
+                    <td colspan="5">No data to display</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <button class="btn btn-primary" onclick="downloadReport()">
+            📥 Download Report (CSV)
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
