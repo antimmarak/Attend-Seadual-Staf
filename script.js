@@ -40,12 +40,13 @@ function initializeMobileOptimizations() {
 
 // Initialize the app
 function initializeApp() {
-    renderStaffList();
     renderScheduleDropdowns();
     renderEntryTimeDropdown();
+    renderAttendanceDropdown(); // New: Initialize attendance staff dropdown
     updateDashboard();
     renderScheduleList();
-    renderAttendanceList();
+    renderTodayAttendanceList(); // New: Render today's attendance in the new section
+    renderAttendanceList(); // Existing: Render all attendance records
     // Validate and clean entry time data before rendering
     validateAndCleanEntryTimeData();
     renderEntryTimeList();
@@ -84,6 +85,123 @@ function setTodayDate() {
     document.getElementById('attendance-date').value = today;
     document.getElementById('schedule-date').value = today;
     document.getElementById('entry-date').value = today;
+}
+
+// Render attendance dropdown
+function renderAttendanceDropdown() {
+    const attendanceSelect = document.getElementById('attendance-staff-select');
+
+    if (staffData.length === 0) {
+        attendanceSelect.innerHTML = '<option value="">No staff available</option>';
+        return;
+    }
+
+    attendanceSelect.innerHTML = '<option value="">Choose staff member</option>' +
+        staffData.map(staff => `<option value="${staff.id}">${staff.name} (${staff.staffId})</option>`).join('');
+}
+
+// Check-in function
+document.getElementById('check-in-btn').addEventListener('click', () => {
+    const staffId = parseInt(document.getElementById('attendance-staff-select').value);
+    const staff = staffData.find(s => s.id === staffId);
+
+    if (!staff) {
+        showAlert('❌ Please select a valid staff member', 'error');
+        return;
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const checkInTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+    const existingRecordIndex = attendanceData.findIndex(a =>
+        a.staffId === staffId && a.date === today
+    );
+
+    if (existingRecordIndex !== -1) {
+        showAlert('⚠️ Staff already checked in today!', 'info');
+        return;
+    }
+
+    const newAttendance = {
+        id: Date.now(),
+        staffId: staffId,
+        staffName: staff.name,
+        date: today,
+        status: 'Present',
+        checkInTime: checkInTime,
+        checkOutTime: '--'
+    };
+
+    attendanceData.push(newAttendance);
+    saveData();
+    renderTodayAttendanceList();
+    updateDashboard();
+    showAlert('✅ Checked in successfully!', 'success');
+});
+
+// Check-out function
+document.getElementById('check-out-btn').addEventListener('click', () => {
+    const staffId = parseInt(document.getElementById('attendance-staff-select').value);
+    const staff = staffData.find(s => s.id === staffId);
+
+    if (!staff) {
+        showAlert('❌ Please select a valid staff member', 'error');
+        return;
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const checkOutTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+    const existingRecordIndex = attendanceData.findIndex(a =>
+        a.staffId === staffId && a.date === today
+    );
+
+    if (existingRecordIndex === -1) {
+        showAlert('⚠️ Staff has not checked in today!', 'info');
+        return;
+    }
+
+    if (attendanceData[existingRecordIndex].checkOutTime !== '--') {
+        showAlert('⚠️ Staff already checked out today!', 'info');
+        return;
+    }
+
+    attendanceData[existingRecordIndex].checkOutTime = checkOutTime;
+    attendanceData[existingRecordIndex].status = 'Present'; // Ensure status is Present on checkout
+    saveData();
+    renderTodayAttendanceList();
+    renderAttendanceList();
+    updateDashboard();
+    showAlert('✅ Checked out successfully!', 'success');
+});
+
+// Render today's attendance list
+function renderTodayAttendanceList() {
+    const todayAttendanceListBody = document.getElementById('today-attendance-list');
+    const today = new Date().toISOString().split('T')[0];
+
+    const todayAttendance = attendanceData.filter(a => a.date === today);
+
+    if (todayAttendance.length === 0) {
+        todayAttendanceListBody.innerHTML = '<tr><td colspan="4">No attendance records for today</td></tr>';
+        return;
+    }
+
+    todayAttendanceListBody.innerHTML = todayAttendance.map(record => {
+        const checkIn = convertTo12Hour(record.checkInTime || '--');
+        const checkOut = convertTo12Hour(record.checkOutTime || '--');
+
+        return `
+            <tr>
+                <td data-label="Staff Name">${record.staffName}</td>
+                <td data-label="Status"><span class="status-badge status-${record.status.toLowerCase()}">${record.status}</span></td>
+                <td data-label="Office-in"><strong>${checkIn}</strong></td>
+                <td data-label="Office-out"><strong>${checkOut}</strong></td>
+            </tr>
+        `;
+    }).join('');
 }
 
 // Save data to localStorage
@@ -154,6 +272,7 @@ document.getElementById('add-staff-form').addEventListener('submit', (e) => {
     saveData();
     renderStaffList();
     renderScheduleDropdowns();
+    renderAttendanceDropdown();
     updateReportSelects();
     document.getElementById('add-staff-form').reset();
     showAlert('Staff member added successfully!', 'success');
@@ -195,6 +314,7 @@ function deleteStaff(staffId) {
         renderStaffList();
         renderScheduleDropdowns();
         renderEntryTimeDropdown();
+        renderAttendanceDropdown();
         renderScheduleList();
         updateReportSelects();
         showAlert('Staff member deleted successfully!', 'success');
@@ -245,6 +365,7 @@ document.getElementById('edit-staff-form').addEventListener('submit', (e) => {
     renderStaffList();
     renderScheduleDropdowns();
     renderEntryTimeDropdown();
+    renderAttendanceDropdown();
     updateReportSelects();
     closeEditModal();
     showAlert('Staff member updated successfully!', 'success');
@@ -280,11 +401,9 @@ document.getElementById('schedule-form').addEventListener('submit', (e) => {
 // Render schedule dropdowns
 function renderScheduleDropdowns() {
     const scheduleSelect = document.getElementById('schedule-staff');
-    const attendanceSelect = document.getElementById('attendance-staff');
 
     if (staffData.length === 0) {
         scheduleSelect.innerHTML = '<option value="">No staff available</option>';
-        attendanceSelect.innerHTML = '<option value="">No staff available</option>';
         return;
     }
 
@@ -292,7 +411,19 @@ function renderScheduleDropdowns() {
         staffData.map(staff => `<option value="${staff.id}">${staff.name} (${staff.staffId})</option>`).join('');
 
     scheduleSelect.innerHTML = optionsHtml;
-    attendanceSelect.innerHTML = optionsHtml;
+}
+
+// Render attendance dropdown
+function renderAttendanceDropdown() {
+    const attendanceSelect = document.getElementById('attendance-staff-select');
+
+    if (staffData.length === 0) {
+        attendanceSelect.innerHTML = '<option value="">No staff available</option>';
+        return;
+    }
+
+    attendanceSelect.innerHTML = '<option value="">Choose staff member</option>' + 
+        staffData.map(staff => `<option value="${staff.id}">${staff.name} (${staff.staffId})</option>`).join('');
 }
 
 // Render schedule list
@@ -329,55 +460,8 @@ function deleteSchedule(scheduleId) {
     }
 }
 
-// ============ ATTENDANCE ============
-document.getElementById('attendance-form').addEventListener('submit', (e) => {
-    e.preventDefault();
-
-    const staffId = parseInt(document.getElementById('attendance-staff').value);
-    const staff = staffData.find(s => s.id === staffId);
-
-    if (!staff) {
-        showAlert('❌ Please select a valid staff member', 'error');
-        return;
-    }
-
-    const checkInTime = document.getElementById('attendance-time').value || '--';
-    const checkOutTime = document.getElementById('attendance-checkout').value || '--';
-
-    if (!checkInTime && !checkOutTime) {
-        showAlert('⚠️ Please enter at least Check-in or Check-out time', 'error');
-        return;
-    }
-
-    const newAttendance = {
-        id: Date.now(),
-        staffId: staffId,
-        staffName: staff.name,
-        date: document.getElementById('attendance-date').value,
-        status: document.getElementById('attendance-status').value,
-        checkInTime: checkInTime,
-        checkOutTime: checkOutTime
-    };
-
-    // Check if attendance already recorded for this date
-    const existingIndex = attendanceData.findIndex(a => 
-        a.staffId === staffId && a.date === newAttendance.date
-    );
-
-    if (existingIndex !== -1) {
-        attendanceData[existingIndex] = newAttendance;
-        showAlert('✅ Attendance updated successfully!', 'success');
-    } else {
-        attendanceData.push(newAttendance);
-        showAlert('✅ Attendance marked successfully!', 'success');
-    }
-
-    saveData();
-    renderAttendanceList();
-    updateDashboard();
-    document.getElementById('attendance-form').reset();
-    setTodayDate();
-});
+// No longer using a form for direct attendance submission, using check-in/check-out buttons instead
+// document.getElementById('attendance-form').addEventListener('submit', (e) => { ... });
 
 // Render attendance list
 function renderAttendanceList() {
@@ -1272,6 +1356,8 @@ window.filterAttendance = filterAttendance;
 window.filterEntryTime = filterEntryTime;
 window.generateReport = generateReport;
 window.downloadReport = downloadReport;
+window.openEditAttendanceModal = openEditAttendanceModal; // Export for global access
+window.closeEditAttendanceModal = closeEditAttendanceModal; // Export for global access
 
 // Close modal when clicking outside
 window.onclick = function(event) {
@@ -1351,7 +1437,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert('✅ Attendance record updated successfully!');
                 
                 closeEditAttendanceModal();
-                displayAttendance();
+                renderAttendanceList(); // Use renderAttendanceList to update the main list
+                renderTodayAttendanceList(); // Update today's attendance as well
+                updateDashboard();
                 
             } catch (error) {
                 console.error('❌ Error updating attendance:', error);

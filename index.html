@@ -10,7 +10,7 @@
     <div class="container">
       <!-- Header -->
       <header class="header">
-        <h1>📅 Attendance Scheduling System</h1>
+        <h1>Attendance Scheduling System</h1>
         <p>Manage staff attendance and schedules efficiently</p>
       </header>
 
@@ -436,43 +436,44 @@
       <section id="attendance" class="tab-content">
         <h2>Attendance Check-In/Check-Out</h2>
         <div class="attendance-container">
-          <form id="attendance-form" class="form-container">
+          <div class="form-container">
+            <h3>Mark Attendance</h3>
             <div class="form-group">
-              <label for="attendance-date">Date:</label>
-              <input type="date" id="attendance-date" required />
-            </div>
-            <div class="form-group">
-              <label for="attendance-staff">Select Staff:</label>
-              <select id="attendance-staff" required>
+              <label for="attendance-staff-select">Select Staff:</label>
+              <select id="attendance-staff-select" required>
                 <option value="">Choose staff member</option>
               </select>
             </div>
-            <div class="form-group">
-              <label for="attendance-status">Status:</label>
-              <select id="attendance-status" required>
-                <option value="">Select Status</option>
-                <option value="Present">Present</option>
-                <option value="Absent">Absent</option>
-                <option value="Leave">On Leave</option>
-                <option value="Late">Late</option>
-                <option value="HalfDay">Half Day</option>
-                <option value="WFH">Work From Home</option>
-              </select>
+            <div class="attendance-actions">
+              <button id="check-in-btn" class="btn btn-success">Check-In</button>
+              <button id="check-out-btn" class="btn btn-danger">Check-Out</button>
             </div>
-            <div class="form-group">
-              <label for="attendance-time">Check-in Time:</label>
-              <input type="time" id="attendance-time" />
-            </div>
-            <div class="form-group">
-              <label for="attendance-checkout">Check-out Time:</label>
-              <input type="time" id="attendance-checkout" />
-            </div>
-            <button type="submit" class="btn btn-primary">
-              Mark Attendance
-            </button>
-          </form>
+          </div>
 
-          <h3>Attendance Records</h3>
+          <div>
+            <h3>Today's Attendance</h3>
+            <div class="table-wrapper">
+              <table class="attendance-table">
+                <thead>
+                  <tr>
+                    <th>Staff Name</th>
+                    <th>Status</th>
+                    <th>Check-in Time</th>
+                    <th>Check-out Time</th>
+                  </tr>
+                </thead>
+                <tbody id="today-attendance-list">
+                  <tr>
+                    <td colspan="4">No attendance records for today</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-20">
+          <h3>All Attendance Records</h3>
           <div class="filter-group">
             <input type="date" id="filter-date" placeholder="Filter by date" />
             <button class="btn btn-secondary" onclick="filterAttendance()">
@@ -579,7 +580,7 @@
           </div>
 
           <button class="btn btn-primary" onclick="downloadReport()">
-            📥 Download Report (CSV)
+            Download Report (CSV)
           </button>
         </div>
       </section>
