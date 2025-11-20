@@ -94,11 +94,11 @@ async function demoDemoLogin(email, password) {
 
     // Demo credentials
     const demoAdminCredentials = {
-        'admin@attendance.com': 'admin123'
+        'admin@gmail.com': 'admin123'
     };
 
     const demoStaffCredentials = {
-        'staff@attendance.com': 'staff123'
+        'staff@gmail.com': 'staff123'
     };
 
     if (selectedRole === 'admin') {
@@ -251,8 +251,8 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     // Demo credentials info
     console.log('📌 Demo Credentials:');
-    console.log('Admin - Email: admin@attendance.com, Password: admin123');
-    console.log('Staff - Email: staff@attendance.com, Password: staff123');
+    console.log('Admin - Email: admin@gmail.com, Password: admin123');
+    console.log('Staff - Email: staff@gmail.com, Password: staff123');
 });
 
 // Forgot Password Handler
