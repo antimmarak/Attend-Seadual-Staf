@@ -300,7 +300,7 @@
                             <option value="Marketing">Marketing</option>
                         </select>
                     </div>
-                    <button type="submit" class="btn btn-primary" style="padding: 12px 30px;">Add Staff</button>
+                    <button type="submit" class="btn btn-primary" style="padding: 12px 30px; background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); color: white; font-weight: 600; border: none; cursor: pointer; border-radius: 8px; font-size: 1em; grid-column: 1 / -1;">➕ Add Staff</button>
                 </form>
             </div>
 
@@ -327,8 +327,36 @@
         <!-- User Accounts Tab -->
         <div id="users" class="admin-tab-content" style="display: none;">
             <div class="admin-section">
-                <h3>🔐 User Accounts</h3>
-                <p style="color: #64748b; margin-bottom: 20px;">Manage user access and permissions</p>
+                <h3>➕ Add New User Account</h3>
+                <form id="addUserForm" class="admin-grid">
+                    <div class="admin-form-group">
+                        <label for="userName">Full Name</label>
+                        <input type="text" id="userName" placeholder="John Doe" required />
+                    </div>
+                    <div class="admin-form-group">
+                        <label for="userEmail">Email Address</label>
+                        <input type="email" id="userEmail" placeholder="john@company.com" required />
+                    </div>
+                    <div class="admin-form-group">
+                        <label for="userRole">Role</label>
+                        <select id="userRole" required>
+                            <option value="">Select Role</option>
+                            <option value="Admin">Admin (Full Control)</option>
+                            <option value="Manager">Manager (Limited Control)</option>
+                            <option value="Staff">Staff (View Only)</option>
+                        </select>
+                    </div>
+                    <div class="admin-form-group">
+                        <label for="userPassword">Temporary Password</label>
+                        <input type="password" id="userPassword" placeholder="Min 8 characters" required />
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="padding: 12px 30px; background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); color: white; font-weight: 600; border: none; cursor: pointer; border-radius: 8px; font-size: 1em; grid-column: 1 / -1;">➕ Create User Account</button>
+                </form>
+            </div>
+
+            <div class="admin-section">
+                <h3>🔐 User Accounts & Access Control</h3>
+                <p style="color: #64748b; margin-bottom: 20px;">Manage user access, permissions, and roles. Click on 🔐 Permissions to configure granular access controls.</p>
                 <table class="attendance-table">
                     <thead>
                         <tr>
@@ -342,6 +370,76 @@
                     </thead>
                     <tbody id="usersTable">
                         <tr><td colspan="6" style="text-align: center; color: #94a3b8;">No users registered</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="admin-section">
+                <h3>📋 Role Permissions Reference</h3>
+                <table class="attendance-table" style="font-size: 0.9em;">
+                    <thead>
+                        <tr>
+                            <th>Permission</th>
+                            <th>Admin</th>
+                            <th>Manager</th>
+                            <th>Staff</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>View Dashboard</strong></td>
+                            <td>✅</td>
+                            <td>✅</td>
+                            <td>✅</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Manage Staff</strong></td>
+                            <td>✅</td>
+                            <td>✅</td>
+                            <td>❌</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Manage Users</strong></td>
+                            <td>✅</td>
+                            <td>❌</td>
+                            <td>❌</td>
+                        </tr>
+                        <tr>
+                            <td><strong>View Reports</strong></td>
+                            <td>✅</td>
+                            <td>✅</td>
+                            <td>❌</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Edit Settings</strong></td>
+                            <td>✅</td>
+                            <td>❌</td>
+                            <td>❌</td>
+                        </tr>
+                        <tr>
+                            <td><strong>View Logs</strong></td>
+                            <td>✅</td>
+                            <td>✅</td>
+                            <td>❌</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Manage Permissions</strong></td>
+                            <td>✅</td>
+                            <td>❌</td>
+                            <td>❌</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Export Data</strong></td>
+                            <td>✅</td>
+                            <td>✅</td>
+                            <td>❌</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Delete Records</strong></td>
+                            <td>✅</td>
+                            <td>❌</td>
+                            <td>❌</td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -403,6 +501,9 @@
 
     <!-- Supabase JS -->
     <script async src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Test Data Generator (optional - for development) -->
+    <script src="admin-test-data.js"></script>
 
     <!-- Admin Script -->
     <script src="admin.js"></script>

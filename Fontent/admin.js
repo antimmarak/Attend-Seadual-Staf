@@ -5,6 +5,43 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 let supabase = null;
 let currentUser = null;
 
+// ============ PERMISSIONS CONFIGURATION (DEFINED FIRST) ============
+const DEFAULT_PERMISSIONS = {
+    'Admin': {
+        viewDashboard: true,
+        manageStaff: true,
+        manageUsers: true,
+        viewReports: true,
+        editSettings: true,
+        viewLogs: true,
+        managePermissions: true,
+        exportData: true,
+        deleteRecords: true
+    },
+    'Manager': {
+        viewDashboard: true,
+        manageStaff: true,
+        manageUsers: false,
+        viewReports: true,
+        editSettings: false,
+        viewLogs: true,
+        managePermissions: false,
+        exportData: true,
+        deleteRecords: false
+    },
+    'Staff': {
+        viewDashboard: true,
+        manageStaff: false,
+        manageUsers: false,
+        viewReports: false,
+        editSettings: false,
+        viewLogs: false,
+        managePermissions: false,
+        exportData: false,
+        deleteRecords: false
+    }
+};
+
 // Initialize Supabase
 async function initSupabase() {
     try {
@@ -90,6 +127,8 @@ function initTabNavigation() {
 
 // ============ STAFF MANAGEMENT ============
 let staffList = JSON.parse(localStorage.getItem('staffData')) || [];
+let usersList = JSON.parse(localStorage.getItem('usersData')) || [];
+let editingStaffId = null;
 
 function renderStaffTable() {
     const tbody = document.getElementById('staffTable');
@@ -107,11 +146,33 @@ function renderStaffTable() {
             <td><span class="status-badge" style="background: #e0e7ff; color: #3730a3;">${staff.department}</span></td>
             <td><span class="status-badge" style="background: #dcfce7; color: #166534;">Active</span></td>
             <td>
-                <button class="btn btn-sm" onclick="editStaff(${staff.id})" style="font-size: 12px; padding: 6px 12px;">Edit</button>
-                <button class="btn btn-sm" style="background: #dc2626; font-size: 12px; padding: 6px 12px;" onclick="deleteStaff(${staff.id})">Delete</button>
+                <button class="btn btn-sm" onclick="editStaff(${staff.id})" style="font-size: 12px; padding: 6px 12px; background: #2563eb; color: white;">✏️ Edit</button>
+                <button class="btn btn-sm" style="background: #dc2626; color: white; font-size: 12px; padding: 6px 12px;" onclick="deleteStaff(${staff.id})">🗑️ Delete</button>
             </td>
         </tr>
     `).join('');
+}
+
+function editStaff(staffId) {
+    const staff = staffList.find(s => s.id === staffId);
+    if (!staff) {
+        showAlert('❌ Staff member not found', 'error');
+        return;
+    }
+
+    editingStaffId = staffId;
+    document.getElementById('staffName').value = staff.name;
+    document.getElementById('staffId').value = staff.staffId;
+    document.getElementById('staffEmail').value = staff.email;
+    document.getElementById('staffDept').value = staff.department;
+
+    const submitBtn = document.querySelector('#addStaffForm button[type="submit"]');
+    submitBtn.textContent = '💾 Update Staff';
+    submitBtn.style.background = '#2563eb';
+
+    // Scroll to form
+    document.querySelector('.admin-section').scrollIntoView({ behavior: 'smooth' });
+    document.getElementById('staffName').focus();
 }
 
 function deleteStaff(staffId) {
@@ -120,6 +181,7 @@ function deleteStaff(staffId) {
         localStorage.setItem('staffData', JSON.stringify(staffList));
         renderStaffTable();
         showAlert('✅ Staff member deleted successfully', 'success');
+        updateDashboardStats();
     }
 }
 
@@ -129,28 +191,262 @@ function initStaffFormHandler() {
         form.addEventListener('submit', function(e) {
             e.preventDefault();
 
-            const newStaff = {
-                id: Date.now(),
-                name: document.getElementById('staffName').value,
-                staffId: document.getElementById('staffId').value,
-                email: document.getElementById('staffEmail').value,
-                department: document.getElementById('staffDept').value
-            };
+            const staffName = document.getElementById('staffName').value.trim();
+            const staffId = document.getElementById('staffId').value.trim();
+            const staffEmail = document.getElementById('staffEmail').value.trim();
+            const staffDept = document.getElementById('staffDept').value;
 
-            staffList.push(newStaff);
+            // Validation
+            if (!staffName || !staffId || !staffEmail || !staffDept) {
+                showAlert('❌ Please fill in all fields', 'error');
+                return;
+            }
+
+            if (editingStaffId) {
+                // Update existing staff
+                const staffIndex = staffList.findIndex(s => s.id === editingStaffId);
+                if (staffIndex > -1) {
+                    staffList[staffIndex] = {
+                        id: editingStaffId,
+                        name: staffName,
+                        staffId: staffId,
+                        email: staffEmail,
+                        department: staffDept
+                    };
+                    showAlert('✅ Staff member updated successfully', 'success');
+                    editingStaffId = null;
+                    const submitBtn = document.querySelector('#addStaffForm button[type="submit"]');
+                    submitBtn.textContent = '➕ Add Staff';
+                    submitBtn.style.background = '';
+                }
+            } else {
+                // Check for duplicate staff ID
+                if (staffList.some(s => s.staffId === staffId)) {
+                    showAlert('❌ Staff ID already exists', 'error');
+                    return;
+                }
+
+                // Add new staff
+                const newStaff = {
+                    id: Date.now(),
+                    name: staffName,
+                    staffId: staffId,
+                    email: staffEmail,
+                    department: staffDept
+                };
+                staffList.push(newStaff);
+                showAlert('✅ Staff member added successfully', 'success');
+            }
+
             localStorage.setItem('staffData', JSON.stringify(staffList));
             renderStaffTable();
+            updateDashboardStats();
             this.reset();
-            showAlert('✅ Staff member added successfully', 'success');
+        });
+    }
+}
+
+// ============ USER FORM HANDLER ============
+function initUserFormHandler() {
+    const form = document.getElementById('addUserForm');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const userName = document.getElementById('userName').value.trim();
+            const userEmail = document.getElementById('userEmail').value.trim();
+            const userRole = document.getElementById('userRole').value;
+            const userPassword = document.getElementById('userPassword').value;
+
+            // Validation
+            if (!userName || !userEmail || !userRole || !userPassword) {
+                showAlert('❌ Please fill in all fields', 'error');
+                return;
+            }
+
+            if (userPassword.length < 8) {
+                showAlert('❌ Password must be at least 8 characters', 'error');
+                return;
+            }
+
+            // Check for duplicate email
+            if (usersList.some(u => u.email === userEmail)) {
+                showAlert('❌ Email already registered', 'error');
+                return;
+            }
+
+            // Create new user
+            const newUser = {
+                name: userName,
+                email: userEmail,
+                role: userRole,
+                password: userPassword, // In production, this should be hashed
+                permissions: { ...DEFAULT_PERMISSIONS[userRole] },
+                createdAt: new Date().toISOString(),
+                lastLogin: null,
+                status: 'Active'
+            };
+
+            usersList.push(newUser);
+            localStorage.setItem('usersData', JSON.stringify(usersList));
+            renderUsersTable();
+            updateDashboardStats();
+            this.reset();
+            showAlert(`✅ User ${userEmail} created successfully with ${userRole} role`, 'success');
         });
     }
 }
 
 // ============ STATISTICS ============
 function updateDashboardStats() {
-    document.getElementById('totalUsers').textContent = staffList.length;
-    document.getElementById('activeToday').textContent = Math.floor(staffList.length * 0.8);
-    document.getElementById('pendingActions').textContent = Math.floor(Math.random() * 5);
+    document.getElementById('totalUsers').textContent = staffList.length + usersList.length;
+    document.getElementById('activeToday').textContent = Math.floor((staffList.length + usersList.length) * 0.8);
+    document.getElementById('pendingActions').textContent = Math.floor(Math.random() * 5) + 1;
+}
+
+// ============ USER ACCOUNTS MANAGEMENT ============
+function renderUsersTable() {
+    const tbody = document.getElementById('usersTable');
+    
+    if (usersList.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #94a3b8;">No users registered</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = usersList.map((user, index) => {
+        const roleColor = user.role === 'Admin' ? '#3730a3' : user.role === 'Manager' ? '#92400e' : '#166534';
+        const roleBg = user.role === 'Admin' ? '#e0e7ff' : user.role === 'Manager' ? '#fef3c7' : '#dcfce7';
+        return `
+            <tr>
+                <td><strong>${user.name || user.email.split('@')[0]}</strong></td>
+                <td>${user.email}</td>
+                <td><span class="status-badge" style="background: ${roleBg}; color: ${roleColor};">${user.role || 'Staff'}</span></td>
+                <td><span class="status-badge" style="background: #dcfce7; color: #166534;">✓ Active</span></td>
+                <td>${user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'Never'}</td>
+                <td>
+                    <button class="btn btn-sm" onclick="openUserPermissions(${index})" style="font-size: 12px; padding: 6px 12px; background: #2563eb; color: white;">🔐 Permissions</button>
+                    <button class="btn btn-sm" onclick="editUser(${index})" style="font-size: 12px; padding: 6px 12px; background: #0891b2; color: white;">✏️ Edit</button>
+                    <button class="btn btn-sm" style="background: #dc2626; color: white; font-size: 12px; padding: 6px 12px;" onclick="deleteUser(${index})">🗑️ Delete</button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function editUser(userIndex) {
+    const user = usersList[userIndex];
+    if (!user) {
+        showAlert('❌ User not found', 'error');
+        return;
+    }
+
+    const newName = prompt('Edit user name:', user.name || user.email);
+    if (newName !== null && newName.trim()) {
+        user.name = newName.trim();
+        localStorage.setItem('usersData', JSON.stringify(usersList));
+        renderUsersTable();
+        showAlert(`✅ User ${user.email} updated successfully`, 'success');
+    }
+}
+
+function deleteUser(userIndex) {
+    const user = usersList[userIndex];
+    if (confirm(`Are you sure you want to delete user ${user.email}? This action cannot be undone.`)) {
+        usersList.splice(userIndex, 1);
+        localStorage.setItem('usersData', JSON.stringify(usersList));
+        renderUsersTable();
+        showAlert('✅ User deleted successfully', 'success');
+        updateDashboardStats();
+    }
+}
+
+function openUserPermissions(userIndex) {
+    const user = usersList[userIndex];
+    if (!user) {
+        showAlert('❌ User not found', 'error');
+        return;
+    }
+
+    // Create modal for permissions
+    const modal = document.createElement('div');
+    modal.id = 'permissionsModal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+    `;
+
+    const userPerms = user.permissions || DEFAULT_PERMISSIONS[user.role] || DEFAULT_PERMISSIONS['Staff'];
+    
+    const modalContent = document.createElement('div');
+    modalContent.style.cssText = `
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 600px;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 25px rgba(0, 0, 0, 0.15);
+    `;
+
+    const permissionsHtml = Object.entries(DEFAULT_PERMISSIONS['Admin']).map(([perm, defaultVal]) => {
+        const isChecked = userPerms[perm] || false;
+        return `
+            <div style="margin-bottom: 15px; display: flex; align-items: center;">
+                <input type="checkbox" id="perm_${perm}" ${isChecked ? 'checked' : ''} 
+                    style="width: 18px; height: 18px; cursor: pointer; margin-right: 12px;">
+                <label for="perm_${perm}" style="cursor: pointer; margin: 0; font-weight: 500; color: #1e293b;">
+                    ${perm.replace(/([A-Z])/g, ' $1').trim()}
+                </label>
+            </div>
+        `;
+    }).join('');
+
+    modalContent.innerHTML = `
+        <h3 style="color: #1e293b; margin-top: 0; margin-bottom: 20px;">🔐 Manage Permissions</h3>
+        <p style="color: #64748b; margin-bottom: 20px;"><strong>User:</strong> ${user.email}</p>
+        <p style="color: #64748b; margin-bottom: 20px;"><strong>Role:</strong> ${user.role}</p>
+        <div style="border-top: 1px solid #e2e8f0; padding-top: 15px; margin-bottom: 20px;">
+            ${permissionsHtml}
+        </div>
+        <div style="display: flex; gap: 10px; justify-content: flex-end; border-top: 1px solid #e2e8f0; padding-top: 15px;">
+            <button onclick="closePermissionsModal()" style="padding: 10px 20px; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; background: white; color: #1e293b; font-weight: 600;">Cancel</button>
+            <button onclick="saveUserPermissions(${userIndex})" style="padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); color: white; font-weight: 600;">✅ Save Permissions</button>
+        </div>
+    `;
+
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
+}
+
+function closePermissionsModal() {
+    const modal = document.getElementById('permissionsModal');
+    if (modal) modal.remove();
+}
+
+function saveUserPermissions(userIndex) {
+    const user = usersList[userIndex];
+    if (!user) return;
+
+    const permissions = {};
+    Object.keys(DEFAULT_PERMISSIONS['Admin']).forEach(perm => {
+        const checkbox = document.getElementById(`perm_${perm}`);
+        permissions[perm] = checkbox ? checkbox.checked : false;
+    });
+
+    user.permissions = permissions;
+    localStorage.setItem('usersData', JSON.stringify(usersList));
+    closePermissionsModal();
+    renderUsersTable();
+    showAlert(`✅ Permissions updated for ${user.email}`, 'success');
 }
 
 // ============ LOGOUT ============
@@ -236,11 +532,13 @@ window.addEventListener('DOMContentLoaded', async () => {
         // Update UI
         updateUserInfo();
         renderStaffTable();
+        renderUsersTable();
         updateDashboardStats();
 
         // Initialize event listeners
         initTabNavigation();
         initStaffFormHandler();
+        initUserFormHandler();
         initLogoutHandler();
 
         // Sync with Supabase
@@ -248,6 +546,8 @@ window.addEventListener('DOMContentLoaded', async () => {
 
         console.log('✅ Admin Panel loaded successfully');
         console.log('Current user:', currentUser);
+        console.log('Staff List:', staffList);
+        console.log('Users List:', usersList);
     } catch (error) {
         console.error('❌ Admin initialization error:', error);
         showAlert('Error loading admin panel. Please login again.', 'error');
