@@ -1,3 +1,39 @@
+// ============ SESSION CHECKING ============
+function checkSessionAndRedirect() {
+    const sessionData = sessionStorage.getItem('userSession');
+    if (!sessionData) {
+        window.location.href = 'login.html';
+        return null;
+    }
+    return JSON.parse(sessionData);
+}
+
+// Check session on page load
+const currentUser = checkSessionAndRedirect();
+
+// Setup logout
+function setupLogout() {
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', function() {
+            if (confirm('Are you sure you want to logout?')) {
+                sessionStorage.removeItem('userSession');
+                localStorage.removeItem('rememberEmail');
+                localStorage.removeItem('rememberRole');
+                window.location.href = 'login.html';
+            }
+        });
+    }
+    
+    // Show user welcome message
+    if (currentUser) {
+        const userWelcome = document.getElementById('userWelcome');
+        if (userWelcome) {
+            userWelcome.textContent = `Welcome, ${currentUser.email.split('@')[0]}!`;
+        }
+    }
+}
+
 // Data Storage
 let staffData = JSON.parse(localStorage.getItem('staffData')) || [];
 let scheduleData = JSON.parse(localStorage.getItem('scheduleData')) || [];
@@ -9,6 +45,7 @@ const isMobile = window.innerWidth <= 768;
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
+    setupLogout();
     initializeApp();
     setTodayDate();
     initializeMobileOptimizations();

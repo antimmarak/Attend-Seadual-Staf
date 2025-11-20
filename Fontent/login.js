@@ -10,8 +10,7 @@ let supabase = null;
 async function initSupabase() {
     try {
         if (window.supabase && window.supabase.createClient) {
-const SUPABASE_ANON_KEY = 'sb_publishable_z7T1CDBKRArikgs_R1nvTg_-SSimhK3';
-            supabase = window.supabase.createClient('https://zqylkepwzwtiozmqbtlj.supabase.co', SUPABASE_ANON_KEY);
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
             console.log('✅ Supabase initialized successfully');
             return true;
         } else {
@@ -208,12 +207,25 @@ window.addEventListener('DOMContentLoaded', async () => {
     // Initialize Supabase
     await initSupabase();
 
+    // Add small delay to ensure Supabase is ready
+    await new Promise(resolve => setTimeout(resolve, 500));
+
     // Check if user already logged in
     if (supabase) {
-        const { data } = await supabase.auth.getSession();
-        if (data.session) {
-            window.location.href = 'index.html';
-            return;
+        try {
+            const { data } = await supabase.auth.getSession();
+            if (data && data.session) {
+                // Determine redirect based on session
+                const userRole = localStorage.getItem('rememberRole') || 'staff';
+                if (userRole === 'admin') {
+                    window.location.href = 'admin.html';
+                } else {
+                    window.location.href = 'index.html';
+                }
+                return;
+            }
+        } catch (error) {
+            console.warn('⚠️ Session check error:', error);
         }
     }
 

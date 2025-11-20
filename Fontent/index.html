@@ -10,8 +10,16 @@
     <div class="container">
       <!-- Header -->
       <header class="header">
-        <h1>Attendance Scheduling System</h1>
-        <p>Manage staff attendance and schedules efficiently</p>
+        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+          <div>
+            <h1>📋 Attendance Management System</h1>
+            <p>Manage staff attendance and schedules efficiently</p>
+          </div>
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <span id="userWelcome" style="color: #2563eb; font-weight: 600;"></span>
+            <button id="logoutBtn" style="background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">🚪 Logout</button>
+          </div>
+        </div>
       </header>
 
       <!-- Navigation Tabs -->
@@ -587,5 +595,13 @@
     </div>
 
     <script src="script.js"></script>
+    <script src="admin.js"></script>
+    <script src="login.js"></script>
+    <script src="schedule.js"></script>
+    <script src="attendance.js"></script>
+    <script src="entryTime.js"></script>
+    <script src="reports.js"></script>
+    <script src="staff.js"></script>
+
   </body>
 </html>

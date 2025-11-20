@@ -1,6 +1,6 @@
 // ============ SUPABASE CONFIGURATION ============
 const SUPABASE_URL = 'https://zqylkepwzwtiozmqbtlj.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_z7T1CDBKRArikgs_R1nvTg_-SSimhK3';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpxeWxrZXB3end0aW96bXFidGxqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMzNzY5NDIsImV4cCI6MjA3ODk1Mjk0Mn0.k4Yc2CewdtM29tYsW8LfHKtNJGXsmzEpdB3aDHShKFk';
 
 let supabase = null;
 let currentUser = null;
@@ -9,7 +9,7 @@ let currentUser = null;
 async function initSupabase() {
     try {
         if (window.supabase && window.supabase.createClient) {
-            supabase = window.supabase.createClient('https://zqylkepwzwtiozmqbtlj.supabase.co', SUPABASE_ANON_KEY);
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
             console.log('✅ Supabase initialized');
             return true;
         }
@@ -221,27 +221,40 @@ async function saveToSupabase(tableName, record) {
 
 // ============ INITIALIZATION ============
 window.addEventListener('DOMContentLoaded', async () => {
-    // Check session
-    if (!checkUserSession()) return;
+    try {
+        // Initialize Supabase first
+        const supInit = await initSupabase();
+        console.log('Supabase init result:', supInit);
 
-    // Initialize Supabase
-    await initSupabase();
+        // Add delay for Supabase to fully load
+        await new Promise(resolve => setTimeout(resolve, 300));
 
-    // Update UI
-    updateUserInfo();
-    renderStaffTable();
-    updateDashboardStats();
+        // Check session with error handling
+        const sessionOk = checkUserSession();
+        if (!sessionOk) return;
 
-    // Initialize event listeners
-    initTabNavigation();
-    initStaffFormHandler();
-    initLogoutHandler();
+        // Update UI
+        updateUserInfo();
+        renderStaffTable();
+        updateDashboardStats();
 
-    // Sync with Supabase
-    await syncWithSupabase();
+        // Initialize event listeners
+        initTabNavigation();
+        initStaffFormHandler();
+        initLogoutHandler();
 
-    console.log('✅ Admin Panel loaded successfully');
-    console.log('Current user:', currentUser);
+        // Sync with Supabase
+        await syncWithSupabase();
+
+        console.log('✅ Admin Panel loaded successfully');
+        console.log('Current user:', currentUser);
+    } catch (error) {
+        console.error('❌ Admin initialization error:', error);
+        showAlert('Error loading admin panel. Please login again.', 'error');
+        setTimeout(() => {
+            window.location.href = 'login.html';
+        }, 2000);
+    }
 });
 
 // ============ SUPABASE SETUP GUIDE ============
