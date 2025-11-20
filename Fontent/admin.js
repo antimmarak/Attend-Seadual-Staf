@@ -297,11 +297,74 @@ function initUserFormHandler() {
     }
 }
 
+// ============ PENDING ACTIONS MANAGEMENT ============
+function getPendingActions() {
+    const actions = [];
+    
+    // Check for users that need verification
+    usersList.forEach((user, idx) => {
+        if (!user.lastLogin) {
+            actions.push({
+                id: `user-verify-${idx}`,
+                type: 'User Verification',
+                description: `User "${user.name || user.email}" has never logged in`,
+                severity: 'warning',
+                user: user.email
+            });
+        }
+    });
+    
+    // Check for staff that need setup
+    staffList.forEach((staff, idx) => {
+        if (!staff.status || staff.status !== 'Active') {
+            actions.push({
+                id: `staff-setup-${idx}`,
+                type: 'Staff Setup',
+                description: `Staff member "${staff.name}" needs to be activated`,
+                severity: 'warning',
+                staff: staff.staffId
+            });
+        }
+    });
+    
+    // Check for users without permissions set
+    usersList.forEach((user, idx) => {
+        if (!user.permissions || Object.keys(user.permissions).length === 0) {
+            actions.push({
+                id: `perms-set-${idx}`,
+                type: 'Permissions Setup',
+                description: `Permissions not configured for user "${user.name || user.email}"`,
+                severity: 'error',
+                user: user.email
+            });
+        }
+    });
+    
+    return actions;
+}
+
+function displayPendingActions() {
+    const actions = getPendingActions();
+    const count = actions.length;
+    
+    document.getElementById('pendingActions').textContent = count;
+    
+    // Store actions in sessionStorage for detail page
+    sessionStorage.setItem('pendingActions', JSON.stringify(actions));
+    
+    // Log for debugging
+    if (count > 0) {
+        console.log(`⚠️ ${count} pending action(s) found:`, actions);
+    }
+    
+    return count;
+}
+
 // ============ STATISTICS ============
 function updateDashboardStats() {
     document.getElementById('totalUsers').textContent = staffList.length + usersList.length;
     document.getElementById('activeToday').textContent = Math.floor((staffList.length + usersList.length) * 0.8);
-    document.getElementById('pendingActions').textContent = Math.floor(Math.random() * 5) + 1;
+    displayPendingActions();
 }
 
 // ============ USER ACCOUNTS MANAGEMENT ============
@@ -431,6 +494,66 @@ function closePermissionsModal() {
     const modal = document.getElementById('permissionsModal');
     if (modal) modal.remove();
 }
+
+// ============ PENDING ACTIONS MODAL ============
+function showPendingActionsModal() {
+    const modal = document.getElementById('pendingActionsModal');
+    const actions = getPendingActions();
+    const actionsList = document.getElementById('pendingActionsList');
+    
+    if (actions.length === 0) {
+        actionsList.innerHTML = `
+            <div style="text-align: center; padding: 40px 20px; color: #64748b;">
+                <p style="font-size: 3em; margin: 0;">✅</p>
+                <p style="font-size: 1.1em; margin: 10px 0 0 0;">No pending actions!</p>
+                <p style="font-size: 0.9em; margin: 5px 0 0 0; color: #94a3b8;">All tasks are completed.</p>
+            </div>
+        `;
+    } else {
+        actionsList.innerHTML = actions.map((action, idx) => {
+            const severityColor = action.severity === 'error' ? '#dc2626' : '#ea580c';
+            const severityBg = action.severity === 'error' ? '#fee2e2' : '#fff7ed';
+            return `
+                <div style="background: ${severityBg}; border-left: 4px solid ${severityColor}; padding: 15px; margin-bottom: 12px; border-radius: 6px;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div style="flex: 1;">
+                            <p style="margin: 0 0 5px 0; color: ${severityColor}; font-weight: 600; font-size: 0.95em;">
+                                ${action.severity === 'error' ? '🔴' : '⚠️'} ${action.type}
+                            </p>
+                            <p style="margin: 0; color: #1e293b; font-size: 0.9em;">
+                                ${action.description}
+                            </p>
+                        </div>
+                        <span style="background: ${severityColor}; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.75em; font-weight: 600; white-space: nowrap; margin-left: 10px;">
+                            ${action.severity.toUpperCase()}
+                        </span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+    
+    modal.style.display = 'flex';
+}
+
+function closePendingActionsModal() {
+    const modal = document.getElementById('pendingActionsModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// Close modal when clicking outside
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('pendingActionsModal');
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closePendingActionsModal();
+            }
+        });
+    }
+});
 
 function saveUserPermissions(userIndex) {
     const user = usersList[userIndex];

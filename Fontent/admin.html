@@ -260,10 +260,10 @@
                     <p class="admin-stat-value" id="activeToday">0</p>
                     <div class="admin-stat-change">✓ On schedule</div>
                 </div>
-                <div class="admin-stat-card">
+                <div class="admin-stat-card" style="cursor: pointer;" onclick="showPendingActionsModal()">
                     <h4>Pending Actions</h4>
                     <p class="admin-stat-value" id="pendingActions">0</p>
-                    <div class="admin-stat-change">⚠️ Requires attention</div>
+                    <div class="admin-stat-change">⚠️ Click to view details</div>
                 </div>
                 <div class="admin-stat-card">
                     <h4>System Health</h4>
@@ -495,6 +495,22 @@
                         <tr><td colspan="4" style="text-align: center; color: #94a3b8;">No activity logs</td></tr>
                     </tbody>
                 </table>
+            </div>
+        </div>
+
+        <!-- Pending Actions Modal -->
+        <div id="pendingActionsModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 1000; justify-content: center; align-items: center;">
+            <div class="modal-content" style="background: white; border-radius: 12px; padding: 30px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 2px solid #e2e8f0; padding-bottom: 15px;">
+                    <h2 style="margin: 0; color: #1e293b; font-size: 1.5em;">⚠️ Pending Actions</h2>
+                    <button onclick="closePendingActionsModal()" style="background: none; border: none; font-size: 1.5em; cursor: pointer; color: #64748b;">✕</button>
+                </div>
+                <div id="pendingActionsList" style="margin-bottom: 20px;">
+                    <!-- Actions will be populated here -->
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 15px;">
+                    <button onclick="closePendingActionsModal()" style="padding: 10px 20px; background: #e2e8f0; color: #1e293b; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">Close</button>
+                </div>
             </div>
         </div>
     </div>
